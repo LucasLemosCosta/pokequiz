@@ -1,24 +1,32 @@
 #include <Arduino.h>
 #include <WiFi.h>
 
+//! Put your password and name 
+const char* nameWiFe = "******";
+const char* passwordWiFe = "******";
 
-const char* nameWiFe = "Bento & Thor";
-const char* passwordWiFe = "Lucasfilho68";
+void wifeInit();
 
 void setup()
 {
   Serial.begin(115200);
-  
+  wifeInit();
+
+}
+
+void loop()
+{
+}
+
+void wifeInit()
+{
   WiFi.begin(nameWiFe,passwordWiFe);
   while(WiFi.status() != WL_CONNECTED)
   {
     Serial.print(".");
     delay(500);
   }
-
+  
   Serial.print("\n\r Wife Connected");
-}
-
-void loop()
-{
+  
 }
