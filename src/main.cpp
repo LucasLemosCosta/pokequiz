@@ -9,6 +9,7 @@ const char *passwordWiFe = "";
 
 const String httpLink = "https://pokeapi.co/api/v2/pokemon/";
 
+
 void wifeInit();
 String askApiInfo(String link,String param);
 
@@ -18,12 +19,16 @@ void setup()
   wifeInit();
 
   JsonDocument doc;
-  const char* info = askApiInfo(httpLink,"1").c_str();
-  DeserializationError error = deserializeJson(doc,info);
+  const char* info = askApiInfo(httpLink,String(1)).c_str();
+  JsonDocument filter;
+  filter["name"] = true;
+  filter["id"] = true;
+  filter["types"][0]["type"]["name"] = true;
+  
+  DeserializationError error = deserializeJson(doc,info,DeserializationOption::Filter(filter));
   char buffer[1000];
   serializeJsonPretty(doc,buffer);
   Serial.print(buffer);
-
 
 }
 
