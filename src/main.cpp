@@ -11,6 +11,7 @@ const String httpLink = "https://pokeapi.co/api/v2/pokemon/";
 
 void wifeInit();
 String askApiInfo(String link, String param);
+void treatDeserializationError(DeserializationError error);
 
 void setup()
 {
@@ -28,6 +29,31 @@ void setup()
   filter["types"][0]["type"]["name"] = true;
 
   DeserializationError error = deserializeJson(doc, info, DeserializationOption::Filter(filter));
+  treatDeserializationError(error);
+
+  char buffer[1000];
+  serializeJsonPretty(doc, buffer);
+  Serial.print(buffer);
+}
+
+void loop()
+{
+}
+
+void wifeInit()
+{
+  WiFi.begin(nameWiFe, passwordWiFe);
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    Serial.print(".");
+    delay(500);
+  }
+
+  Serial.print("\n\r Wife Connected \n\r");
+}
+
+void treatDeserializationError(DeserializationError error)
+{
   switch (error.code())
   {
   case DeserializationError::Ok:
@@ -49,26 +75,6 @@ void setup()
     Serial.println("unknown error");
     break;
   }
-
-  char buffer[1000];
-  serializeJsonPretty(doc, buffer);
-  Serial.print(buffer);
-}
-
-void loop()
-{
-}
-
-void wifeInit()
-{
-  WiFi.begin(nameWiFe, passwordWiFe);
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    Serial.print(".");
-    delay(500);
-  }
-
-  Serial.print("\n\r Wife Connected \n\r");
 }
 
 String askApiInfo(const String link, String param)
