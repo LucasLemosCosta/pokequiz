@@ -11,11 +11,13 @@ const String httpPokemonLink = "https://pokeapi.co/api/v2/pokemon/";
 
 JsonDocument doc;
 bool flagCorrectPokemon = true;
+const char* guess = "";
 
 void wifeInit();
 String askApiInfo(String link, String param);
 void treatDeserializationError(DeserializationError error);
 JsonDocument pickRandomPokemon(int min, int max);
+void speekWithSerial();
 
 void setup()
 {
@@ -25,38 +27,42 @@ void setup()
   wifeInit();
 
   randomSeed(esp_random());
-
-  doc = pickRandomPokemon(0,1024);
-  char buffer[1000];
-  serializeJsonPretty(doc, buffer);
-  Serial.print(buffer);
-
 }
 
 void loop()
 {
   static unsigned int pokemonId;
-  static const char* pokemonName;
-  static const char* pokemonPrimaryType;
-  static const char* pokemonSecondType;
 
- 
+  static const char *pokemonName;
+  static const char *pokemonPrimaryType;
+  static const char *pokemonSecondType;
+  static const char *lastGuess = "";
 
-  if(flagCorrectPokemon)
+  speekWithSerial();
+  /*
+  if(strcmp(lastGuess , guess) != 0)
   {
+    lastGuess = guess;
+    if(guess == pokemonName)
+  }
+  
+  
+  */
+  
+  if (flagCorrectPokemon)
+  {
+    doc = pickRandomPokemon(0, 1024);
     pokemonName = doc["name"] | "Sem Nome";
     pokemonId = doc["id"] | 0;
     pokemonPrimaryType = doc["types"][0]["type"]["name"] | "No primary type";
     pokemonSecondType = doc["types"][1]["type"]["name"] | "No second type";
 
-
     Serial.printf("\n\r Name pokemon: %s, Pokedex number: %u\n\r Primary type: %s ,Second type: %s \n\r ",
-      pokemonName,
-      pokemonId,
-      pokemonPrimaryType,
-      pokemonSecondType
-    );
-    
+                  pokemonName,
+                  pokemonId,
+                  pokemonPrimaryType,
+                  pokemonSecondType);
+
     flagCorrectPokemon = false;
   }
 }
@@ -69,10 +75,36 @@ void wifeInit()
     Serial.print(".");
     delay(500);
   }
-  
+
   Serial.print("\n\r Wife Connected \n\r");
 }
 
+void speekWithSerial()
+{
+  static int8_t index = 0;
+  static char text[100];
+
+  while (Serial.available() > 0)
+  {
+    char letter = Serial.read();
+    switch (letter)
+    {
+    
+    case '\n':
+      text[index] = '\0';
+      guess = text;
+      index = 0;
+      
+      break;
+
+    default:
+        text[index++] = letter;    
+      break;
+    }
+
+    //Serial.print(letter);
+  }
+}
 JsonDocument pickRandomPokemon(int min, int max)
 {
   JsonDocument doc;
@@ -114,7 +146,6 @@ void treatDeserializationError(DeserializationError error)
     break;
   }
 }
-
 
 String askApiInfo(const String link, String param)
 {
