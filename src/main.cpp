@@ -7,11 +7,12 @@
 const char *nameWiFe = "";
 const char *passwordWiFe = "";
 
-const String httpLink = "https://pokeapi.co/api/v2/pokemon/";
+const String httpPokemonLink = "https://pokeapi.co/api/v2/pokemon/";
 
 void wifeInit();
 String askApiInfo(String link, String param);
 void treatDeserializationError(DeserializationError error);
+JsonDocument pickRandomPokemon(int min, int max);
 
 void setup()
 {
@@ -19,17 +20,10 @@ void setup()
   Serial.println();
 
   wifeInit();
+  randomSeed(esp_random());
 
   JsonDocument doc;
-  const char *info = askApiInfo(httpLink, String(1)).c_str();
-
-  JsonDocument filter;
-  filter["name"] = true;
-  filter["id"] = true;
-  filter["types"][0]["type"]["name"] = true;
-
-  DeserializationError error = deserializeJson(doc, info, DeserializationOption::Filter(filter));
-  treatDeserializationError(error);
+  doc = pickRandomPokemon(0,1024);
 
   char buffer[1000];
   serializeJsonPretty(doc, buffer);
@@ -48,8 +42,25 @@ void wifeInit()
     Serial.print(".");
     delay(500);
   }
-
+  
   Serial.print("\n\r Wife Connected \n\r");
+}
+
+JsonDocument pickRandomPokemon(int min, int max)
+{
+  JsonDocument doc;
+  int indexPokedex = random(min, max);
+  const char *jsonText = askApiInfo(httpPokemonLink, String(indexPokedex)).c_str();
+
+  JsonDocument filter;
+  filter["name"] = true;
+  filter["id"] = true;
+  filter["types"][0]["type"]["name"] = true;
+
+  DeserializationError error = deserializeJson(doc, jsonText, DeserializationOption::Filter(filter));
+  treatDeserializationError(error);
+
+  return doc;
 }
 
 void treatDeserializationError(DeserializationError error)
@@ -76,6 +87,7 @@ void treatDeserializationError(DeserializationError error)
     break;
   }
 }
+
 
 String askApiInfo(const String link, String param)
 {
