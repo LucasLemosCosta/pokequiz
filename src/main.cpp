@@ -11,7 +11,7 @@ const String httpPokemonLink = "https://pokeapi.co/api/v2/pokemon/";
 
 JsonDocument doc;
 bool flagCorrectPokemon = true;
-const char* guess = "";
+const char *guess = "";
 
 void wifeInit();
 String askApiInfo(String link, String param);
@@ -39,16 +39,20 @@ void loop()
   static const char *lastGuess = "";
 
   speekWithSerial();
-  /*
-  if(strcmp(lastGuess , guess) != 0)
+  if (strcmp(lastGuess, guess) != 0)
   {
-    lastGuess = guess;
-    if(guess == pokemonName)
+    if (strcmp(guess, pokemonName) == 0)
+    {
+      flagCorrectPokemon = true;
+    }
+    Serial.println(strcmp(guess, pokemonName) == 0 ? "congratulations" : "miss the shot");
+    Serial.printf("\n\r name : %s \n\r", pokemonName);
+    Serial.printf("\n\r guess: %s \n\r", guess);
+
+    lastGuess = "";
+    guess = "";
   }
-  
-  
-  */
-  
+
   if (flagCorrectPokemon)
   {
     doc = pickRandomPokemon(0, 1024);
@@ -89,20 +93,23 @@ void speekWithSerial()
     char letter = Serial.read();
     switch (letter)
     {
-    
+    case '\r':
+      continue;
     case '\n':
       text[index] = '\0';
       guess = text;
       index = 0;
-      
+      Serial.printf("\n\r guess serial: %s \n\r", guess);
+      Serial.printf("\n\r text: %s \n\r", text);
+
       break;
 
     default:
-        text[index++] = letter;    
+      text[index++] = letter;
       break;
     }
 
-    //Serial.print(letter);
+    // Serial.print(letter);
   }
 }
 JsonDocument pickRandomPokemon(int min, int max)
