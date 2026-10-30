@@ -45,9 +45,7 @@ void loop()
     {
       flagCorrectPokemon = true;
     }
-    Serial.println(strcmp(guess, pokemonName) == 0 ? "congratulations" : "miss the shot");
-    Serial.printf("\n\r name : %s \n\r", pokemonName);
-    Serial.printf("\n\r guess: %s \n\r", guess);
+    Serial.println(strcmp(guess, pokemonName) == 0 ? "congratulations" : "miss the shot try again: ");
 
     lastGuess = "";
     guess = "";
@@ -60,7 +58,7 @@ void loop()
     pokemonId = doc["id"] | 0;
     pokemonPrimaryType = doc["types"][0]["type"]["name"] | "No primary type";
     pokemonSecondType = doc["types"][1]["type"]["name"] | "No second type";
-
+    Serial.print("ESP32 : Pokemon game try ");
     Serial.printf("\n\r Name pokemon: %s, Pokedex number: %u\n\r Primary type: %s ,Second type: %s \n\r ",
                   pokemonName,
                   pokemonId,
@@ -134,7 +132,6 @@ void treatDeserializationError(DeserializationError error)
   switch (error.code())
   {
   case DeserializationError::Ok:
-    Serial.println("without error");
     break;
   case DeserializationError::IncompleteInput:
     Serial.println("input is inconplete");
