@@ -9,9 +9,11 @@ const char *passwordWiFe = "";
 
 const String httpPokemonLink = "https://pokeapi.co/api/v2/pokemon/";
 
+//*Game Settigns
 JsonDocument doc;
 bool flagCorrectPokemon = true;
 const char *guess = "";
+const int16_t maxStartPoint = 100;
 
 void wifeInit();
 String askApiInfo(String link, String param);
@@ -31,41 +33,62 @@ void setup()
 
 void loop()
 {
+  //* Keep pokemon info
   static unsigned int pokemonId;
-
   static const char *pokemonName;
   static const char *pokemonPrimaryType;
   static const char *pokemonSecondType;
+  //* game controllers
   static const char *lastGuess = "";
+  static int8_t attemptCounter = 0;
+  static int16_t points = 0;
 
   speekWithSerial();
-  if (strcmp(lastGuess, guess) != 0)
-  {
-    if (strcmp(guess, pokemonName) == 0)
-    {
-      flagCorrectPokemon = true;
-    }
-    Serial.println(strcmp(guess, pokemonName) == 0 ? "congratulations" : "miss the shot try again: ");
 
-    lastGuess = "";
-    guess = "";
-  }
-
+  //! Start and Change Pokemon
   if (flagCorrectPokemon)
   {
+    points = 0;
     doc = pickRandomPokemon(0, 1024);
     pokemonName = doc["name"] | "Sem Nome";
     pokemonId = doc["id"] | 0;
     pokemonPrimaryType = doc["types"][0]["type"]["name"] | "No primary type";
     pokemonSecondType = doc["types"][1]["type"]["name"] | "No second type";
-    Serial.print("ESP32 : Pokemon game try ");
-    Serial.printf("\n\r Name pokemon: %s, Pokedex number: %u\n\r Primary type: %s ,Second type: %s \n\r ",
-                  pokemonName,
-                  pokemonId,
+
+    Serial.println("ESP32 : Pokemon Game");
+    Serial.printf("Points: %d,\n\r", points);
+    Serial.printf("Attempt: %d, \n\r", attemptCounter);
+
+    points = 100;
+    Serial.printf("Informations: \n\r Primary type: %s ,Second type: %s \n\r ",
                   pokemonPrimaryType,
                   pokemonSecondType);
 
+    Serial.println();
+    Serial.print("try enter with a pokemon name: ");
     flagCorrectPokemon = false;
+  }
+  //! Try a guess
+  if (strcmp(lastGuess, guess) != 0)
+  {
+    if (strcmp(guess, pokemonName) == 0)
+    {
+      flagCorrectPokemon = true;
+      Serial.print("congratulations");
+    }
+    else
+    {
+      attemptCounter++;
+      points -= 25;
+
+      Serial.println();
+      Serial.printf("points to earn: %d",points);
+      Serial.printf("\n\r attempt: %d \n\r", attemptCounter);
+      Serial.print("try again: ");
+    }
+
+    lastGuess = "";
+    guess = "";
   }
 }
 
@@ -79,6 +102,7 @@ void wifeInit()
   }
 
   Serial.print("\n\r Wife Connected \n\r");
+  Serial.println();
 }
 
 void speekWithSerial()
@@ -97,9 +121,6 @@ void speekWithSerial()
       text[index] = '\0';
       guess = text;
       index = 0;
-      Serial.printf("\n\r guess serial: %s \n\r", guess);
-      Serial.printf("\n\r text: %s \n\r", text);
-
       break;
 
     default:
