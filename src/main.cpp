@@ -8,18 +8,24 @@ const char *nameWiFe = "";
 const char *passwordWiFe = "";
 
 const String httpPokemonLink = "https://pokeapi.co/api/v2/pokemon/";
+const String httpPokemonSpeciesLink = "https://pokeapi.co/api/v2/pokemon-species/";
 
 //*Game Settigns
-JsonDocument doc;
+JsonDocument docPokemon;
+JsonDocument docPokemonSpecies;
+
 bool flagCorrectPokemon = true;
 const char *guess = "";
 const int16_t maxStartPoint = 100;
+const int minPokemonRange = 1;
+const int maxPokemonRange = 1024;
 
 void wifeInit();
-String askApiInfo(String link, String param);
-void treatDeserializationError(DeserializationError error);
-JsonDocument pickRandomPokemon(int min, int max);
 void speekWithSerial();
+void treatDeserializationError(DeserializationError);
+
+String askApiInfo(String, String);
+JsonDocument pickRandomPokemon(const String,JsonDocument);
 
 void setup()
 {
@@ -38,6 +44,9 @@ void loop()
   static const char *pokemonName;
   static const char *pokemonPrimaryType;
   static const char *pokemonSecondType;
+  static const char *generation;
+  static const char *color;
+  static const char *flavorText;
   //* game controllers
   static const char *lastGuess = "";
   static int8_t attemptCounter = 0;
@@ -49,18 +58,25 @@ void loop()
   if (flagCorrectPokemon)
   {
     points = 0;
-    doc = pickRandomPokemon(0, 1024);
-    pokemonName = doc["name"] | "Sem Nome";
-    pokemonId = doc["id"] | 0;
-    pokemonPrimaryType = doc["types"][0]["type"]["name"] | "No primary type";
-    pokemonSecondType = doc["types"][1]["type"]["name"] | "No second type";
+
+    JsonDocument filter;
+    filter["name"] = true;
+    filter["id"] = true;
+    filter["types"][0]["type"]["name"] = true;
+
+    docPokemon = pickRandomPokemon(httpPokemonLink,filter);
+
+    pokemonName = docPokemon["name"] | "Sem Nome";
+    pokemonId = docPokemon["id"] | 0;
+    pokemonPrimaryType = docPokemon["types"][0]["type"]["name"] | "No primary type";
+    pokemonSecondType = docPokemon["types"][1]["type"]["name"] | "No second type";
 
     Serial.println("ESP32 : Pokemon Game");
     Serial.printf("Points: %d,\n\r", points);
     Serial.printf("Attempt: %d, \n\r", attemptCounter);
 
     points = 100;
-    Serial.printf("Informations: \n\r Primary type: %s ,Second type: %s \n\r ",
+    Serial.printf("Informations: \n\r1 - Primary type: %s ,Second type: %s \n\r ",
                   pokemonPrimaryType,
                   pokemonSecondType);
 
@@ -84,6 +100,18 @@ void loop()
       Serial.println();
       Serial.printf("points to earn: %d",points);
       Serial.printf("\n\r attempt: %d \n\r", attemptCounter);
+      switch (attemptCounter)
+      {
+        case 1:
+           Serial.printf("Informations: \n\r1 - Primary type: %s ,Second type: %s \n\r 2 - Pokedex Number: %d \n\r",
+                  pokemonPrimaryType,
+                  pokemonSecondType,
+                  pokemonId
+                );
+
+        break;
+        
+      }
       Serial.print("try again: ");
     }
 
@@ -131,16 +159,11 @@ void speekWithSerial()
     // Serial.print(letter);
   }
 }
-JsonDocument pickRandomPokemon(int min, int max)
+JsonDocument pickRandomPokemon(const String httpLink,JsonDocument filter)
 {
   JsonDocument doc;
-  int indexPokedex = random(min, max);
+  int indexPokedex = random(minPokemonRange, maxPokemonRange);
   const char *jsonText = askApiInfo(httpPokemonLink, String(indexPokedex)).c_str();
-
-  JsonDocument filter;
-  filter["name"] = true;
-  filter["id"] = true;
-  filter["types"][0]["type"]["name"] = true;
 
   DeserializationError error = deserializeJson(doc, jsonText, DeserializationOption::Filter(filter));
   treatDeserializationError(error);
