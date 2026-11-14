@@ -4,8 +4,8 @@
 #include <ArduinoJson.h>
 
 //! Put your password and name
-const char *nameWiFe = "Bento & Thor";
-const char *passwordWiFe = "Lucasfilho68";
+const char *nameWiFe = "";
+const char *passwordWiFe = "";
 
 //* API Link
 const String httpPokemonLink = "https://pokeapi.co/api/v2/pokemon/";
@@ -117,11 +117,13 @@ void loop()
       //! Game Over 
       if (pointsToEarn <= 0)
       {
+        Serial.printf("The Pokémon was: %s\n\r",pokemonName);
+        Serial.println("Game Over Try Again With a Different Pokemon...");
+        Serial.println();
+
         flagEndPokemonGame = true;
         pokemonId = 0;
         attemptCounter = 0;
-        Serial.println("Game Over Try Again With a Different Pokemon...");
-        Serial.println();
       }
       else
       {
