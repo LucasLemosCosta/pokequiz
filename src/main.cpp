@@ -4,8 +4,8 @@
 #include <ArduinoJson.h>
 
 //! Put your password and name
-const char *nameWiFe = "Bento & Thor";
-const char *passwordWiFe = "Lucasfilho68";
+const char *nameWiFe = "";
+const char *passwordWiFe = "";
 
 //* API Link
 const String httpPokemonLink = "https://pokeapi.co/api/v2/pokemon/";
