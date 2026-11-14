@@ -24,12 +24,12 @@ const char *guess = "";
 //* Keep pokemon info
 JsonDocument docPokemon;
 JsonDocument docPokemonSpecies;
-unsigned int pokemonId = 0;
 const char *pokemonName;
+unsigned int pokemonId = 0;
 const char *pokemonPrimaryType;
 const char *pokemonSecondType;
-const char *generation;
-const char *color;
+const char *pokemonGeneration;
+const char *pokemonColor;
 
 void wifeInit();
 
@@ -37,7 +37,7 @@ void speekWithSerial();
 void treatDeserializationError(DeserializationError);
 
 String askApiInfo(String, String);
-JsonDocument pickRandomPokemon(const String, JsonDocument,int);
+JsonDocument pickRandomPokemon(const String, JsonDocument, int);
 void tipMessage(int counter);
 
 void setup()
@@ -72,17 +72,17 @@ void loop()
     filterPokedexInfo["color"]["name"] = true;
     filterPokedexInfo["generation"]["name"] = true;
 
-    int indexPokemon = random(minPokemonRange,maxPokemonRange);
-    docPokemon = pickRandomPokemon(httpPokemonLink, filterBattleInfo,indexPokemon);
-    docPokemonSpecies = pickRandomPokemon(httpPokemonSpeciesLink,filterPokedexInfo,indexPokemon);
+    int indexPokemon = random(minPokemonRange, maxPokemonRange);
+    docPokemon = pickRandomPokemon(httpPokemonLink, filterBattleInfo, indexPokemon);
+    docPokemonSpecies = pickRandomPokemon(httpPokemonSpeciesLink, filterPokedexInfo, indexPokemon);
 
     pokemonName = docPokemon["name"] | "Sem Nome";
     pokemonId = docPokemon["id"] | 0;
     pokemonPrimaryType = docPokemon["types"][0]["type"]["name"] | "No primary type";
     pokemonSecondType = docPokemon["types"][1]["type"]["name"] | "No second type";
-    color = docPokemonSpecies["color"]["name"] | "No color";
-    generation = docPokemonSpecies["generation"]["name"]| "No Generetion";
-    
+    pokemonColor = docPokemonSpecies["color"]["name"] | "No color";
+    pokemonGeneration = docPokemonSpecies["generation"]["name"] | "No Generetion";
+
     Serial.println("ESP32 : Pokemon Game");
     Serial.printf(pointsToEarn != 0 ? "Points: %d,\n\r" : 0, pointsToEarn);
     Serial.printf("Attempt: %d, \n\r", attemptCounter);
@@ -91,7 +91,7 @@ void loop()
 
     Serial.println();
     Serial.print("try enter with a pokemon name: ");
-    
+
     flagCorrectPokemon = false;
   }
 
@@ -108,12 +108,13 @@ void loop()
     }
     else
     {
+      int lessPoint = maxPokemonRange / 4;
       attemptCounter++;
-      pointsToEarn -= 25;
+      pointsToEarn -= lessPoint;
 
       Serial.println();
-      Serial.printf("points to earn: %d ", pointsToEarn);
-      Serial.printf("\n\r attempt: %d \n\r", attemptCounter);
+      Serial.printf("points to earn: %d \n\r", pointsToEarn);
+      Serial.printf("attempt: %d \n\r", attemptCounter);
       Serial.println("Tips: ...");
       tipMessage(attemptCounter);
       Serial.print("try again: ");
@@ -162,7 +163,7 @@ void speekWithSerial()
     // Serial.print(letter);
   }
 }
-JsonDocument pickRandomPokemon(const String httpLink, JsonDocument filter,int randomIndex)
+JsonDocument pickRandomPokemon(const String httpLink, JsonDocument filter, int randomIndex)
 {
   JsonDocument doc;
   int indexPokedex = randomIndex;
@@ -214,29 +215,9 @@ String askApiInfo(const String link, String param)
 }
 void tipMessage(int counter)
 {
-  // TODO Make the other else tips
 
-  for(int i = 0; i <= counter; i++)
-  {
-    Serial.printf(i >= 0? "1- first type: %s, second type: %s \n\r": "1 - \n\r",pokemonPrimaryType,pokemonSecondType);
-    Serial.printf(i >= 1? "2 - pokedex number: %d\n\r": "2 - \n\r",pokemonId);
-  }
-
-  /*
-  if (counter)
-    switch (counter)
-    {
-    case 0:
-      Serial.printf("1 - Primary type: %s ,Second type: %s \n\r",
-                    pokemonPrimaryType,
-                    pokemonSecondType);
-
-      break;
-    case 1:
-      Serial.printf("1 - Primary type: %s ,Second type: %s \n\r2 - Pokedex Number: %d \n\r",
-                    pokemonPrimaryType,
-                    pokemonSecondType,
-                    pokemonId);
-    }
-  */
+  Serial.printf(counter >= 0 ? "1- first type: %s, second type: %s \n\r" : "1 - ...\n\r", pokemonPrimaryType, pokemonSecondType);
+  Serial.printf(counter >= 1 ? "2 - pokedex number: %d\n\r" : "2 - ...\n\r", pokemonId);
+  Serial.printf(counter >= 2 ? "2 - pokedex color: %s\n\r" : "3 - ...\n\r", pokemonColor);
+  Serial.printf(counter >= 3 ? "2 - pokedex generetion: %s\n\r" : "4 - ...\n\r", pokemonGeneration);
 }
