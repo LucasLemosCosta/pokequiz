@@ -4,8 +4,8 @@
 #include <ArduinoJson.h>
 
 //! Put your password and name
-const char *nameWiFe = "Bento & Thor";
-const char *passwordWiFe = "Lucasfilho68";
+const char *nameWiFe = "";
+const char *passwordWiFe = "";
 
 //* API Link
 const String httpPokemonLink = "https://pokeapi.co/api/v2/pokemon/";
@@ -37,7 +37,7 @@ void speekWithSerial();
 void treatDeserializationError(DeserializationError);
 
 String askApiInfo(String, String);
-JsonDocument pickRandomPokemon(const String, JsonDocument);
+JsonDocument pickRandomPokemon(const String, JsonDocument,int);
 void tipMessage(int counter);
 
 void setup()
@@ -61,20 +61,28 @@ void loop()
   //! Start and Change Pokemon
   if (flagCorrectPokemon || pokemonId == 0)
   {
+
     pointsToEarn = maxStartPoint;
 
     JsonDocument filterBattleInfo;
     filterBattleInfo["name"] = true;
     filterBattleInfo["id"] = true;
     filterBattleInfo["types"][0]["type"]["name"] = true;
+    JsonDocument filterPokedexInfo;
+    filterPokedexInfo["color"]["name"] = true;
+    filterPokedexInfo["generation"]["name"] = true;
 
-    docPokemon = pickRandomPokemon(httpPokemonLink, filterBattleInfo);
+    int indexPokemon = random(minPokemonRange,maxPokemonRange);
+    docPokemon = pickRandomPokemon(httpPokemonLink, filterBattleInfo,indexPokemon);
+    docPokemonSpecies = pickRandomPokemon(httpPokemonSpeciesLink,filterPokedexInfo,indexPokemon);
 
     pokemonName = docPokemon["name"] | "Sem Nome";
     pokemonId = docPokemon["id"] | 0;
     pokemonPrimaryType = docPokemon["types"][0]["type"]["name"] | "No primary type";
     pokemonSecondType = docPokemon["types"][1]["type"]["name"] | "No second type";
-
+    color = docPokemonSpecies["color"]["name"] | "No color";
+    generation = docPokemonSpecies["generation"]["name"]| "No Generetion";
+    
     Serial.println("ESP32 : Pokemon Game");
     Serial.printf(pointsToEarn != 0 ? "Points: %d,\n\r" : 0, pointsToEarn);
     Serial.printf("Attempt: %d, \n\r", attemptCounter);
@@ -154,11 +162,11 @@ void speekWithSerial()
     // Serial.print(letter);
   }
 }
-JsonDocument pickRandomPokemon(const String httpLink, JsonDocument filter)
+JsonDocument pickRandomPokemon(const String httpLink, JsonDocument filter,int randomIndex)
 {
   JsonDocument doc;
-  int indexPokedex = random(minPokemonRange, maxPokemonRange);
-  const char *jsonText = askApiInfo(httpPokemonLink, String(indexPokedex)).c_str();
+  int indexPokedex = randomIndex;
+  const char *jsonText = askApiInfo(httpLink, String(indexPokedex)).c_str();
 
   DeserializationError error = deserializeJson(doc, jsonText, DeserializationOption::Filter(filter));
   treatDeserializationError(error);
