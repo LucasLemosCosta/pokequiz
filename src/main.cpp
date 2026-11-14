@@ -4,8 +4,8 @@
 #include <ArduinoJson.h>
 
 //! Put your password and name
-const char *nameWiFe = "";
-const char *passwordWiFe = "";
+const char *nameWiFe = "Bento & Thor";
+const char *passwordWiFe = "Lucasfilho68";
 
 //* API Link
 const String httpPokemonLink = "https://pokeapi.co/api/v2/pokemon/";
@@ -54,12 +54,13 @@ void loop()
   static const char *lastGuess = "";
   static int8_t attemptCounter = 0;
   static int16_t pointsToEarn = 0;
-  bool flagCorrectPokemon;
+  bool flagEndPokemonGame;
+  bool loseGame;
 
   speekWithSerial();
 
   //! Start and Change Pokemon
-  if (flagCorrectPokemon || pokemonId == 0)
+  if (flagEndPokemonGame || pokemonId == 0)
   {
 
     pointsToEarn = maxStartPoint;
@@ -82,9 +83,10 @@ void loop()
     pokemonSecondType = docPokemon["types"][1]["type"]["name"] | "No second type";
     pokemonColor = docPokemonSpecies["color"]["name"] | "No color";
     pokemonGeneration = docPokemonSpecies["generation"]["name"] | "No Generetion";
-
+    Serial.println("================New Game===================");
+    Serial.println();
     Serial.println("ESP32 : Pokemon Game");
-    Serial.printf(pointsToEarn != 0 ? "Points: %d,\n\r" : 0, pointsToEarn);
+    Serial.printf("Points: %d,\n\r", currentPoints);
     Serial.printf("Attempt: %d, \n\r", attemptCounter);
     Serial.println("Tips: ...");
     tipMessage(attemptCounter);
@@ -92,7 +94,7 @@ void loop()
     Serial.println();
     Serial.print("try enter with a pokemon name: ");
 
-    flagCorrectPokemon = false;
+    flagEndPokemonGame = false;
   }
 
   //! Try a guess
@@ -102,22 +104,35 @@ void loop()
     bool isCorrect = strcmp(guess, pokemonName) == 0;
     if (isCorrect)
     {
-      flagCorrectPokemon = true;
+      flagEndPokemonGame = true;
       pokemonId = 0;
-      Serial.print("congratulations");
+      currentPoints = pointsToEarn;
+      Serial.println("congratulations");
     }
     else
     {
       int lessPoint = maxPokemonRange / 4;
       attemptCounter++;
       pointsToEarn -= lessPoint;
+      //! Game Over 
+      if (pointsToEarn <= 0)
+      {
+        flagEndPokemonGame = true;
+        pokemonId = 0;
+        attemptCounter = 0;
+        Serial.println("Game Over Try Again With a Different Pokemon...");
+        Serial.println();
+      }
+      else
+      {
 
-      Serial.println();
-      Serial.printf("points to earn: %d \n\r", pointsToEarn);
-      Serial.printf("attempt: %d \n\r", attemptCounter);
-      Serial.println("Tips: ...");
-      tipMessage(attemptCounter);
-      Serial.print("try again: ");
+        Serial.println();
+        Serial.printf("points to earn: %d \n\r", pointsToEarn);
+        Serial.printf("attempt: %d \n\r", attemptCounter);
+        Serial.println("Tips: ...");
+        tipMessage(attemptCounter);
+        Serial.print("try again: ");
+      }
     }
 
     lastGuess = "";
