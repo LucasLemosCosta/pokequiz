@@ -4,67 +4,71 @@
 #include <ArduinoJson.h>
 
 //! Put your password and name
-const char *nameWiFe = "";
-const char *passwordWiFe = "";
+const char *nameWiFe = "Bento & Thor";
+const char *passwordWiFe = "Lucasfilho68";
 
+//* API Link
 const String httpPokemonLink = "https://pokeapi.co/api/v2/pokemon/";
 const String httpPokemonSpeciesLink = "https://pokeapi.co/api/v2/pokemon-species/";
 
-//*Game Settigns
-JsonDocument docPokemon;
-JsonDocument docPokemonSpecies;
-
-bool flagCorrectPokemon = true;
-const char *guess = "";
+//* Game Settings
 const int16_t maxStartPoint = 100;
 const int minPokemonRange = 1;
-const int maxPokemonRange = 1024;
+const int maxPokemonRange = 100;
+
+// TODO choose a better name for the comment
+//* Game ...
+int currentPoints = 0;
+const char *guess = "";
+
+//* Keep pokemon info
+JsonDocument docPokemon;
+JsonDocument docPokemonSpecies;
+unsigned int pokemonId = 0;
+const char *pokemonName;
+const char *pokemonPrimaryType;
+const char *pokemonSecondType;
+const char *generation;
+const char *color;
 
 void wifeInit();
+
 void speekWithSerial();
 void treatDeserializationError(DeserializationError);
 
 String askApiInfo(String, String);
-JsonDocument pickRandomPokemon(const String,JsonDocument);
+JsonDocument pickRandomPokemon(const String, JsonDocument);
+void tipMessage(int counter);
 
 void setup()
 {
   Serial.begin(115200);
   Serial.println();
-
   wifeInit();
-
   randomSeed(esp_random());
 }
 
 void loop()
 {
-  //* Keep pokemon info
-  static unsigned int pokemonId;
-  static const char *pokemonName;
-  static const char *pokemonPrimaryType;
-  static const char *pokemonSecondType;
-  static const char *generation;
-  static const char *color;
-  static const char *flavorText;
   //* game controllers
   static const char *lastGuess = "";
   static int8_t attemptCounter = 0;
-  static int16_t points = 0;
+  static int16_t pointsToEarn = 0;
+  bool flagCorrectPokemon;
 
   speekWithSerial();
 
   //! Start and Change Pokemon
-  if (flagCorrectPokemon)
+  if (flagCorrectPokemon || pokemonId == 0)
   {
-    points = 0;
+    pointsToEarn = maxStartPoint;
 
-    JsonDocument filter;
-    filter["name"] = true;
-    filter["id"] = true;
-    filter["types"][0]["type"]["name"] = true;
+    JsonDocument filterBattleInfo;
+    filterBattleInfo["name"] = true;
+    filterBattleInfo["id"] = true;
+    filterBattleInfo["types"][0]["type"]["name"] = true;
 
-    docPokemon = pickRandomPokemon(httpPokemonLink,filter);
+    docPokemon = pickRandomPokemon(httpPokemonLink, filterBattleInfo);
 
     pokemonName = docPokemon["name"] | "Sem Nome";
     pokemonId = docPokemon["id"] | 0;
@@ -72,46 +76,38 @@ void loop()
     pokemonSecondType = docPokemon["types"][1]["type"]["name"] | "No second type";
 
     Serial.println("ESP32 : Pokemon Game");
-    Serial.printf("Points: %d,\n\r", points);
+    Serial.printf(pointsToEarn != 0 ? "Points: %d,\n\r" : 0, pointsToEarn);
     Serial.printf("Attempt: %d, \n\r", attemptCounter);
-
-    points = 100;
-    Serial.printf("Informations: \n\r1 - Primary type: %s ,Second type: %s \n\r ",
-                  pokemonPrimaryType,
-                  pokemonSecondType);
+    Serial.println("Tips: ...");
+    tipMessage(attemptCounter);
 
     Serial.println();
     Serial.print("try enter with a pokemon name: ");
+    
     flagCorrectPokemon = false;
   }
+
   //! Try a guess
-  if (strcmp(lastGuess, guess) != 0)
+  bool onTryGuess = strcmp(lastGuess, guess) != 0;
+  if (onTryGuess)
   {
-    if (strcmp(guess, pokemonName) == 0)
+    bool isCorrect = strcmp(guess, pokemonName) == 0;
+    if (isCorrect)
     {
       flagCorrectPokemon = true;
+      pokemonId = 0;
       Serial.print("congratulations");
     }
     else
     {
       attemptCounter++;
-      points -= 25;
+      pointsToEarn -= 25;
 
       Serial.println();
-      Serial.printf("points to earn: %d",points);
+      Serial.printf("points to earn: %d ", pointsToEarn);
       Serial.printf("\n\r attempt: %d \n\r", attemptCounter);
-      switch (attemptCounter)
-      {
-        case 1:
-           Serial.printf("Informations: \n\r1 - Primary type: %s ,Second type: %s \n\r 2 - Pokedex Number: %d \n\r",
-                  pokemonPrimaryType,
-                  pokemonSecondType,
-                  pokemonId
-                );
-
-        break;
-        
-      }
+      Serial.println("Tips: ...");
+      tipMessage(attemptCounter);
       Serial.print("try again: ");
     }
 
@@ -132,7 +128,6 @@ void wifeInit()
   Serial.print("\n\r Wife Connected \n\r");
   Serial.println();
 }
-
 void speekWithSerial()
 {
   static int8_t index = 0;
@@ -159,7 +154,7 @@ void speekWithSerial()
     // Serial.print(letter);
   }
 }
-JsonDocument pickRandomPokemon(const String httpLink,JsonDocument filter)
+JsonDocument pickRandomPokemon(const String httpLink, JsonDocument filter)
 {
   JsonDocument doc;
   int indexPokedex = random(minPokemonRange, maxPokemonRange);
@@ -170,7 +165,6 @@ JsonDocument pickRandomPokemon(const String httpLink,JsonDocument filter)
 
   return doc;
 }
-
 void treatDeserializationError(DeserializationError error)
 {
   switch (error.code())
@@ -194,7 +188,6 @@ void treatDeserializationError(DeserializationError error)
     break;
   }
 }
-
 String askApiInfo(const String link, String param)
 {
   String jsonText;
@@ -210,4 +203,32 @@ String askApiInfo(const String link, String param)
   }
 
   return jsonText.c_str();
+}
+void tipMessage(int counter)
+{
+  // TODO Make the other else tips
+
+  for(int i = 0; i <= counter; i++)
+  {
+    Serial.printf(i >= 0? "1- first type: %s, second type: %s \n\r": "1 - \n\r",pokemonPrimaryType,pokemonSecondType);
+    Serial.printf(i >= 1? "2 - pokedex number: %d\n\r": "2 - \n\r",pokemonId);
+  }
+
+  /*
+  if (counter)
+    switch (counter)
+    {
+    case 0:
+      Serial.printf("1 - Primary type: %s ,Second type: %s \n\r",
+                    pokemonPrimaryType,
+                    pokemonSecondType);
+
+      break;
+    case 1:
+      Serial.printf("1 - Primary type: %s ,Second type: %s \n\r2 - Pokedex Number: %d \n\r",
+                    pokemonPrimaryType,
+                    pokemonSecondType,
+                    pokemonId);
+    }
+  */
 }
