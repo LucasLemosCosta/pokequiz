@@ -4,8 +4,8 @@
 #include <ArduinoJson.h>
 
 //! Put your password and name
-const char *nameWiFe = "";
-const char *passwordWiFe = "";
+const char *nameWiFe = "Bento & Thor";
+const char *passwordWiFe = "Lucasfilho68";
 
 //* API Link
 const String httpPokemonLink = "https://pokeapi.co/api/v2/pokemon/";
@@ -64,6 +64,7 @@ void loop()
   {
 
     pointsToEarn = maxStartPoint;
+    attemptCounter = 0;
 
     JsonDocument filterBattleInfo;
     filterBattleInfo["name"] = true;
